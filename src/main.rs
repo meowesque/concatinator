@@ -1,12 +1,14 @@
+use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fs::{self, File};
-use std::io::{self, Read, Write, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use std::collections::HashSet;
 
 fn main() -> io::Result<()> {
+    let args = std::env::args().collect::<Vec<_>>();
+
     let ignore_set = load_ignore_list(".concatignore")?;
-    let start_dir = Path::new(".");
+    let start_dir = Path::new(args.get(1).map(|x| x.as_str()).unwrap_or("."));
     concat_dir(start_dir, &ignore_set)?;
     Ok(())
 }
@@ -28,7 +30,9 @@ fn load_ignore_list<P: AsRef<Path>>(ignore_file: P) -> io::Result<HashSet<String
 fn is_ignored(path: &Path, ignore_set: &HashSet<String>) -> bool {
     for ignore in ignore_set {
         let ignore_path = Path::new(ignore);
-        if path.ends_with(ignore_path) || path.file_name().map_or(false, |n| n == OsStr::new(ignore)) {
+        if path.ends_with(ignore_path)
+            || path.file_name().map_or(false, |n| n == OsStr::new(ignore))
+        {
             return true;
         }
     }
